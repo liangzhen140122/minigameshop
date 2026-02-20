@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guess Number - 猜数字</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      font-family: 'Noto Sans SC', sans-serif;
+      color: #333;
+      padding: 1rem;
+    }
+
+    .back-link {
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      color: #666;
+      text-decoration: none;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .back-link:hover { color: #ff8f00; }
+
+    .game-container {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 2.5rem;
+      max-width: 420px;
+      width: 100%;
+      border: 1px solid #e0e0e0;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 0.5rem;
+      letter-spacing: 2px;
+      background: linear-gradient(90deg, #ff8f00, #ffeb3b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .range-info {
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: #555;
+      margin-bottom: 1.5rem;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    input[type="number"] {
+      flex: 1;
+      padding: 0.9rem 1rem;
+      font-size: 1.1rem;
+      font-family: 'JetBrains Mono', monospace;
+      border: 2px solid #ddd;
+      border-radius: 12px;
+      background: #fff;
+      color: #333;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="number"]:focus {
+      border-color: #ffeb3b;
+    }
+
+    input[type="number"]::placeholder {
+      color: #999;
+    }
+
+    button {
+      padding: 0.9rem 1.5rem;
+      font-size: 1rem;
+      font-family: 'Noto Sans SC', sans-serif;
+      font-weight: 600;
+      background: linear-gradient(135deg, #ff8f00, #ffeb3b);
+      color: #333;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(255, 143, 0, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .message {
+      min-height: 2.5rem;
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 12px;
+      font-weight: 500;
+      text-align: center;
+      font-size: 1rem;
+    }
+
+    .message.hint {
+      background: #fff8e1;
+      color: #f57c00;
+      border: 1px solid #ffb74d;
+    }
+
+    .message.success {
+      background: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #81c784;
+    }
+
+    .message.error {
+      background: #ffebee;
+      color: #c62828;
+      border: 1px solid #e57373;
+    }
+
+    .attempts {
+      margin-top: 1rem;
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .new-game-btn {
+      width: 100%;
+      margin-top: 1rem;
+      background: #f5f5f5;
+      border: 2px solid #ddd;
+      color: #333;
+    }
+
+    .new-game-btn:hover {
+      background: #eeeeee;
+      box-shadow: none;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">← 返回游戏列表</a>
+
+  <div class="game-container">
+    <h1>Guess Number</h1>
+    <p class="subtitle">猜数字游戏</p>
+    <p class="range-info">猜一个 1 ~ 100 之间的数字</p>
+
+    <div class="input-group">
+      <input type="number" id="guessInput" placeholder="输入你的猜测" min="1" max="100" autofocus>
+      <button id="guessBtn">猜！</button>
+    </div>
+
+    <div id="message" class="message"></div>
+    <p class="attempts" id="attempts">已尝试: 0 次</p>
+    <button id="newGameBtn" class="new-game-btn hidden">再来一局</button>
+  </div>
+
+  <script>
+    const minNum = 1;
+    const maxNum = 100;
+    let secretNumber;
+    let attempts = 0;
+
+    const guessInput = document.getElementById('guessInput');
+    const guessBtn = document.getElementById('guessBtn');
+    const messageEl = document.getElementById('message');
+    const attemptsEl = document.getElementById('attempts');
+    const newGameBtn = document.getElementById('newGameBtn');
+
+    function initGame() {
+      secretNumber = Math.floor(Math.random() * (maxNum - minNum + 1)) + minNum;
+      attempts = 0;
+      guessInput.value = '';
+      guessInput.disabled = false;
+      guessBtn.disabled = false;
+      messageEl.textContent = '';
+      messageEl.className = 'message';
+      attemptsEl.textContent = '已尝试: 0 次';
+      newGameBtn.classList.add('hidden');
+      guessInput.focus();
+    }
+
+    function showMessage(text, type) {
+      messageEl.textContent = text;
+      messageEl.className = 'message ' + type;
+    }
+
+    function endGame() {
+      guessInput.disabled = true;
+      guessBtn.disabled = true;
+      newGameBtn.classList.remove('hidden');
+    }
+
+    function handleGuess() {
+      const guess = parseInt(guessInput.value, 10);
+
+      if (isNaN(guess) || guess < minNum || guess > maxNum) {
+        showMessage(`请输入 ${minNum} ~ ${maxNum} 之间的数字`, 'error');
+        return;
+      }
+
+      attempts++;
+      attemptsEl.textContent = `已尝试: ${attempts} 次`;
+
+      if (guess < secretNumber) {
+        showMessage(`太小了！再大一点 ↑`, 'hint');
+      } else if (guess > secretNumber) {
+        showMessage(`太大了！再小一点 ↓`, 'hint');
+      } else {
+        showMessage(`🎉 猜对了！答案就是 ${secretNumber}，用了 ${attempts} 次`, 'success');
+        endGame();
+      }
+
+      guessInput.value = '';
+      guessInput.focus();
+    }
+
+    guessBtn.addEventListener('click', handleGuess);
+    guessInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') handleGuess();
+    });
+    newGameBtn.addEventListener('click', initGame);
+
+    initGame();
+  </script>
+</body>
+</html>
